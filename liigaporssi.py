@@ -1,16 +1,13 @@
 import sqlite3
 import requests
 from bs4 import BeautifulSoup
-import chardet
 
 conn = sqlite3.connect('liigaporssi.db')
 cursor = conn.cursor()
 
 url = 'https://liigaporssi.fi/sm-liiga/sarjataulukko'
-pelaajatUrl = 'https://liigaporssi.fi/sm-liiga/joukkueet/hifk/pelaajat'
 
 response = requests.get(url)
-pelaajatResponse = requests.get(pelaajatUrl)
 
 if response.status_code != 200:
     print(f"Pyyntö epäonnistui, virhekoodi: {response.status_code}")
@@ -41,7 +38,4 @@ for joukkue in joukkueet:
 conn.commit()
 conn.close()
 
-if pelaajatResponse.status_code != 200:
-    print(f'Pyyntö epäonnistui: {pelaajatResponse.status_code}')
-
-   
+ 
