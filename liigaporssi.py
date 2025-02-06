@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS Joukkueet (
 ''')
 
 for joukkue in joukkueet:
-    cursor.execute('INSERT INTO Joukkueet (nimi) VALUES (?)', (joukkue,))
+    cursor.execute('INSERT OR IGNORE INTO Joukkueet (nimi) VALUES (?)', (joukkue,))
 
 conn.commit()
 conn.close()

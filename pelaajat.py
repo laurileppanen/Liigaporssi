@@ -49,28 +49,26 @@ print('HYÖKKÄÄJÄT:', hyokkaajat)
 conn = sqlite3.connect('liigaporssi.db')
 cursor = conn.cursor()
 
+cursor.execute("DROP TABLE IF EXISTS HIFK_pelaajat")
+
 cursor.execute('''
-CREATE TABLE IF NOT EXISTS Pelaajat (
+CREATE TABLE IF NOT EXISTS HIFK_pelaajat (
     pelaaja_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nimi TEXT NOT NULL,
-    pelipaikka TEXT NOT NULL,
-    Joukkue_id INTEGER,
-    FOREIGN KEY (joukkue_id) REFERENCES Joukkueet(joukkue_id),
-    UNIQUE(nimi, joukkue_id)                                                                      
+    nimi TEXT NOT NULL UNIQUE                                                                   
 )
 ''')
 
-cursor.execute("SELECT joukkue_id FROM Joukkueet WHERE nimi = ?", ("HIFK",))
-joukkue_id = cursor.fetchone()[0]
+
+
 
 for nimi in maalivahdit:
-    cursor.execute("INSERT OR IGNORE INTO Pelaajat (nimi, pelipaikka, joukkue_id) VALUES (?, ?, ?)", (nimi, "Maalivahti", joukkue_id))
+    cursor.execute("INSERT OR IGNORE INTO HIFK_pelaajat (nimi) VALUES (?)", (nimi,))
 
 for nimi in puolustajat:
-    cursor.execute("INSERT OR IGNORE INTO Pelaajat (nimi, pelipaikka, joukkue_id) VALUES (?, ?, ?)", (nimi, "Puolustaja", joukkue_id))
+    cursor.execute("INSERT OR IGNORE INTO HIFK_pelaajat (nimi) VALUES (?)", (nimi,))
 
 for nimi in hyokkaajat:
-    cursor.execute("INSERT OR IGNORE INTO Pelaajat (nimi, pelipaikka, joukkue_id) VALUES (?, ?, ?)", (nimi, "Hyökkääjä", joukkue_id))
+    cursor.execute("INSERT OR IGNORE INTO HIFK_pelaajat (nimi) VALUES (?)", (nimi,))
 
 conn.commit()
 conn.close()
