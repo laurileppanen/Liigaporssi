@@ -15,7 +15,11 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "liigaporssi.settings")
 django.setup()
 
 DB_PATH = settings.DATABASES['default']['NAME']
+
 URL = "https://liigaporssi.fi/sm-liiga/joukkueet/hifk/pelaajat"
+
+URL2 = "https://liigaporssi.fi/sm-liiga"
+TEAM_URL = URL2 + "/joukkueet/{}/pelaajat"
 
 options = webdriver.ChromeOptions()
 options.add_argument("--headless")
@@ -23,9 +27,40 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), opti
 
 driver.get(URL)
 time.sleep(3)
-
 soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+driver.get(URL2 + "/sarjataulukko")
+time.sleep(3)
+soup2 = BeautifulSoup(driver.page_source, 'html.parser')
+
 driver.quit()
+
+joukkueet = []
+for td in soup2.find_all('td', class_='essential'):
+    strong_tag = td.find('strong')
+    if strong_tag:
+        joukkue = strong_tag.get_text(strip=True)
+        if not joukkue.isdigit():
+            joukkueet.append(joukkue)
+
+
+print(f"JOUKKUEET: {joukkueet}")
+
+conn = sqlite3.connect(DB_PATH)
+cursor = conn.cursor()
+
+for joukkue in joukkueet:
+    taulun_nimi = f"{joukkue.replace('ä', 'a').replace('Ä', 'A').replace('-', '').replace(' ', '_')}_pelaajat"
+    print(f"TAULU: {taulun_nimi}")
+
+    cursor.execute(f"DROP TABLE IF EXISTS {taulun_nimi}")
+    
+    cursor.execute(f'''
+    CREATE TABLE IF NOT EXISTS {taulun_nimi} (
+       pelaaja_id INTEGER PRIMARY KEY AUTOINCREMENT,
+       nimi TEXT NOT NULL UNIQUE
+    )
+    ''')
 
 maalivahdit_taulukko = soup.find('div', id='stats_m_168761288')
 puolustajat_taulukko = soup.find('div', id='stats_p_168761288')
@@ -50,8 +85,6 @@ for nimi in hyokkaajat_nimi:
     hyokkaaja = nimi.find('a', class_='player_link').text.strip()
     hyokkaajat.append(hyokkaaja)
 
-conn = sqlite3.connect(DB_PATH)
-cursor = conn.cursor()
 
 cursor.execute("DROP TABLE IF EXISTS HIFK_pelaajat")
 
