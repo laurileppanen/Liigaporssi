@@ -1,20 +1,30 @@
+import os
+import sqlite3
+import time
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
-import time
-import sqlite3
+import django
+import sys
+from django.conf import settings
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "liigaporssi.settings")
+django.setup()
+
+DB_PATH = settings.DATABASES['default']['NAME']
+URL = "https://liigaporssi.fi/sm-liiga/joukkueet/hifk/pelaajat"
 
 options = webdriver.ChromeOptions()
+options.add_argument("--headless")
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-url = "https://liigaporssi.fi/sm-liiga/joukkueet/hifk/pelaajat"
-driver.get(url)    
-
+driver.get(URL)
 time.sleep(3)
 
 soup = BeautifulSoup(driver.page_source, 'html.parser')
-
 driver.quit()
 
 maalivahdit_taulukko = soup.find('div', id='stats_m_168761288')
@@ -40,24 +50,16 @@ for nimi in hyokkaajat_nimi:
     hyokkaaja = nimi.find('a', class_='player_link').text.strip()
     hyokkaajat.append(hyokkaaja)
 
-
-print('MOKET:', maalivahdit)
-print('PUOLUSTAJAT:', puolustajat)
-print('HYÖKKÄÄJÄT:', hyokkaajat)
-
-
-conn = sqlite3.connect('liigaporssi.db')
+conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 
 cursor.execute("DROP TABLE IF EXISTS HIFK_pelaajat")
 
 cursor.execute('''
-CREATE TABLE IF NOT EXISTS HIFK_pelaajat (
-    pelaaja_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nimi TEXT NOT NULL UNIQUE                                                                   
-)
+CREATE TABLE IF NOT EXISTS HIFK_pelaajat(
+               pelaaja_id INTEGER PRIMARY KEY AUTOINCREMENT,
+               nimi TEXT NOT NULL)   
 ''')
-
 
 
 
@@ -71,6 +73,4 @@ for nimi in hyokkaajat:
     cursor.execute("INSERT OR IGNORE INTO HIFK_pelaajat (nimi) VALUES (?)", (nimi,))
 
 conn.commit()
-conn.close()
-
- 
+conn.close()    
